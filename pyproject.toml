@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fetal-ultrasound-biometry-engine"
-version = "2.0.0"
-description = "FetalEcho-AI: Ultrasound Biometry & Gestational Age Estimation Engine"
+name = "fetal-ultrasound-biometry-agent"
+version = "3.0.0"
+description = "Fetal Ultrasound Biometry Agent: Clinical decision support system for fetal ultrasound measurements"
 readme = "README.md"
 authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
 license = { text = "MIT" }
@@ -13,15 +13,32 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Topic :: Security/Cryptography",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio",
+    "httpx",
+]
 
 [project.scripts]
-fetal-ultrasound-biometry-engine = "fetal_echo_ai.cli:main"
+fetal-ultrasound-biometry-agent = "cli:main"
 
 [project.urls]
-Homepage = "https://github.com/abusuraihsakhri/fetal-ultrasound-biometry-engine"
-Repository = "https://github.com/abusuraihsakhri/fetal-ultrasound-biometry-engine.git"
+Homepage = "https://github.com/abusuraihsakhri/fetal-ultrasound-biometry-agent"
+Repository = "https://github.com/abusuraihsakhri/fetal-ultrasound-biometry-agent.git"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test"]
+python_functions = ["test_*"]

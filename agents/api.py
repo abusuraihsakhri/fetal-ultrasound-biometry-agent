@@ -1,10 +1,11 @@
 """
 FastAPI REST API Server for Fetal Ultrasound Biometry Agent.
 """
-from typing import Dict, Any, List
-from fastapi import FastAPI, HTTPException
+import os
+from typing import Dict, Any, List, Optional
+from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
-from .base import AuditLogger, PHIGuard
+from .base import AuditLogger, PHIGuard, SecurityException
 from .models import SystemTaskPayload, ConsensusDossier
 from .supervisor import SystemSupervisor
 
@@ -19,6 +20,17 @@ app = FastAPI(
 
 class ChatRequest(BaseModel):
     query: str
+
+
+def verify_admin_token(authorization: Optional[str] = Header(None)) -> None:
+    """Simple bearer-token check for sensitive admin endpoints.
+    Set API_ADMIN_TOKEN env var to enable; if not set, endpoint is disabled.
+    """
+    expected = os.getenv("API_ADMIN_TOKEN")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Admin API not configured (set API_ADMIN_TOKEN)")
+    if not authorization or not authorization.startswith("Bearer ") or authorization[7:] != expected:
+        raise HTTPException(status_code=401, detail="Invalid or missing admin token")
 
 
 @app.get("/health")
@@ -37,8 +49,11 @@ def metrics():
 
 @app.post("/api/audit")
 def api_audit(payload: SystemTaskPayload):
-    dossier = supervisor.process_task(payload)
-    return dossier.to_dict()
+    try:
+        dossier = supervisor.process_task(payload)
+        return dossier.to_dict()
+    except SecurityException as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @app.post("/api/chat")
@@ -46,10 +61,12 @@ def api_chat(req: ChatRequest):
     try:
         ans = supervisor.query_supervisory_chat(req.query)
         return {"response": ans}
+    except SecurityException as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/api/audit/logs")
-def api_audit_logs():
+def api_audit_logs(_=Depends(verify_admin_token)):
     return {"audit_trail": AuditLogger.get_trail(), "verified": AuditLogger.verify_integrity()}
