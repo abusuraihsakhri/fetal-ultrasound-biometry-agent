@@ -1,225 +1,108 @@
 # Fetal Ultrasound Biometry Agent
 
-> **Domain:** Clinical Decision Support & Biomedical Computing
-> **Reference Guidelines & Standards:** ISUOG Fetal Biometry Practice Guidelines, CAP / CLSI / ISO Standards
+Numerical fetal **estimated weight (EFW)** calculator using the Hadlock-3 equation (head circumference, abdominal circumference and femur length). Includes a standalone browser interface, Python function, and FastAPI endpoint. Other legacy audit and simulator interfaces remain available but are **not clinical growth classifiers**.
 
-<div align="center">
+## Browser calculator
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+Open `web/index.html` in a modern browser, or use the GitHub Pages deployment when available. Enter ultrasound measurements in **millimeters**:
 
-</div>
+- HC — head circumference (required)
+- AC — abdominal circumference (required)
+- FL — femur diaphysis length (required)
+- BPD — biparietal diameter (optional, recorded but **not** used by Hadlock-3)
 
----
+Select **Calculate EFW** to view the weight in grams and kilograms. **Export result as CSV** downloads the measurement values, method and EFW. Fictional example values populate the form on first load.
 
-## 📖 What It Does
+The implementation converts millimeters to centimeters and calculates:
 
-Fetal Ultrasound Biometry Agent is a clinical decision support system that evaluates fetal ultrasound measurements against established reference standards. It provides:
+```text
+log10(EFW in g) = 1.326 - 0.00326 × AC × FL
+                 + 0.0107 × HC + 0.0438 × AC + 0.158 × FL
+```
 
-- **Automated biometry evaluation** with multi-worker consensus
-- **Risk stratification** (Routine / Elevated / Critical-STAT) based on measurement thresholds
-- **Zero-PHI outbound guard** that blocks protected health information from leaving the system
-- **Tamper-evident HMAC-SHA256 audit trail** for every evaluation
-- **FastAPI REST API** with Prometheus-compatible metrics
-- **CLI** for interactive use, batch CSV processing, and server deployment
+HC, AC and FL in the equation are **centimeters**. BPD is recorded for reference only.
 
----
+**Clinical limitation:** This is a formula demonstration, not a validated clinical decision-support system. No image measurement, gestational age determination, percentile calculation, growth-restriction classification, anomaly screening, or other diagnosis is performed. Ultrasound acquisition quality, accurate dating, appropriate centile reference and clinical interpretation remain essential. Do not use output alone for medical decisions.
 
-## ⚙️ Key Capabilities & Algorithmic Modules
+References: [Hadlock et al., *Am J Obstet Gynecol* 1985;151:333–337](https://pubmed.ncbi.nlm.nih.gov/3881966/); [ISUOG routine mid-trimester scan guidelines (2022)](https://doi.org/10.1002/uog.24888).
 
-| Module | Description |
-|:-------|:------------|
-| `agents/supervisor.py` | Master orchestrator coordinating multi-worker evaluations |
-| `agents/workers.py` | Specialized workers: QC Invariant, Safety Escalation, Protocol Conformance |
-| `agents/base.py` | PHI guard, HMAC-SHA256 audit trail, security exceptions |
-| `agents/api.py` | FastAPI REST endpoints with admin token protection |
-| `agents/models.py` | Pydantic v2 schemas for payloads, alerts, and dossiers |
-| `agents/llm_factory.py` | Pluggable LLM adapter (mock, Ollama, Claude, OpenAI) |
-| `agents/metrics.py` | Prometheus operational metrics exporter |
-| `agents/learning.py` | Bayesian calibration and active learning feedback engine |
-| `agents/streamer.py` | WebSocket telemetry broadcaster |
-| `enrichment.py` | Domain-specific enrichment feature suite (8 engines) |
+## Privacy
 
----
+The GitHub Pages calculator performs all calculations and CSV export **within your browser**. It makes no application API requests and does not store entered measurements. It loads no third-party fonts, scripts, or analytics. A reference link leads to an external website only if clicked.
 
-## 💻 Installation
+**Do not enter identifiable patient information.** The optional backend has a limited pattern-based identifier check; this does *not* establish HIPAA compliance, complete de-identification, or suitability for real patient records. The backend retains audit data in process memory during runtime.
+
+## Python and API
+
+Requirements: Python 3.9+ (CI exercises 3.10–3.12).
 
 ```bash
-# Clone the repository
 git clone https://github.com/abusuraihsakhri/fetal-ultrasound-biometry-agent.git
 cd fetal-ultrasound-biometry-agent
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install with development dependencies
-pip install -e ".[dev]"
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
 ```
 
-### Environment Variables
+Direct calculation:
 
-| Variable | Required | Description |
-|:---------|:---------|:------------|
-| `AUDIT_SECRET_KEY` | Yes (production) | HMAC-SHA256 signing key (min 32 chars). Must be set in production. |
-| `API_ADMIN_TOKEN` | No | Bearer token for `/api/audit/logs` endpoint. If unset, endpoint returns 503. |
-| `MODEL_PROVIDER` | No | LLM provider: `mock` (default), `ollama`, `claude`, `openai` |
+```python
+from biometry import estimate_fetal_weight
 
----
-
-## 💻 CLI Quickstart & Usage
-
-### 1. Single Task Evaluation
-```bash
-python cli.py audit --task-id TASK-001 --target KEY-01 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
+result = estimate_fetal_weight(hc_mm=300, ac_mm=280, fl_mm=55, bpd_mm=78)
+print(result["estimated_fetal_weight_g"])
 ```
 
-### 2. Supervisory Chat Query
+For API requests and the same browser UI served locally:
+
 ```bash
-python cli.py chat "What is the system status?"
+export AUDIT_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+python cli.py serve --host 127.0.0.1 --port 8000
+# Open http://127.0.0.1:8000/ or POST /api/biometry
 ```
 
-### 3. Batch CSV Processing
 ```bash
+curl -s http://127.0.0.1:8000/api/biometry \
+  -H 'Content-Type: application/json' \
+  -d '{"hc_mm":300,"ac_mm":280,"fl_mm":55,"bpd_mm":78}'
+```
+
+Endpoints: `GET /health`, `POST /api/biometry`, `POST /api/audit`, `POST /api/chat`, `GET /metrics`, and authenticated `GET /api/audit/logs`. `API_ADMIN_TOKEN` controls audit-log access; without it, the endpoint is disabled. The chat backend is a deterministic mock, **not a medical reasoning or validated AI model**.
+
+The legacy `agents/`, `fetal_echo_ai/` and `enrichment.py` components implement generic threshold demonstrations. Their clinical/standards labels, critical status flags and named feature modules do **not** imply validated fetal biometry, imaging, FGR or anomaly-detection capabilities. The legacy CLI supports `audit`, `chat`, `batch`, `verify-audit` and `serve`:
+
+```bash
+python cli.py audit --primary 28 --secondary 14
 python cli.py batch -i sample.csv -o results.csv
-```
-
-### 4. Verify Audit Trail Integrity
-```bash
 python cli.py verify-audit
 ```
 
-### 5. Launch REST API Server
-```bash
-python cli.py serve --host 127.0.0.1 --port 8000
-```
+A missing `AUDIT_SECRET_KEY` in the local CLI generates an **ephemeral** session signing key; persist a strong key in production to avoid invalidating audit records between restarts. Never commit this key. Audit records remain in memory and are not a durable compliance archive.
 
-### Parameter Reference
-| Flag | Type | Default | Description |
-|:-----|:-----|:--------|:------------|
-| `--task-id` | str | `TASK-2026-001` | Unique task / case identifier |
-| `--target` | str | `KEY-TARGET-01` | Entity or specimen target identifier |
-| `--primary` | float | `28.5` | Primary measurement value (e.g., BPD, HC, AC, FL) |
-| `--secondary` | float | `14.2` | Secondary measurement or kinetic index |
-| `--critical` | flag | `False` | Trigger emergency escalation |
-| `--status` | str | `DISCORDANT` | Status descriptor (NOMINAL, DISCORDANT, ANOMALY, etc.) |
-
-### Input Data Schema (Batch CSV)
-
-| Field | Type | Description | Requirement |
-|:------|:-----|:------------|:------------|
-| `task_id` | str | Unique task / case identifier | Required |
-| `target_identifier` | str | Entity or specimen target | Required |
-| `primary_metric` | float | Primary measurement value | Required |
-| `secondary_metric` | float | Secondary measurement | Optional (default: 0.0) |
-| `is_critical_flag` | bool | Emergency escalation flag | Optional (default: false) |
-| `status_descriptor` | str | Status code or phenotype | Optional (default: NOMINAL) |
-
----
-
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active regex inspection blocking SSNs, MRNs, phone numbers, emails, DOBs, and patient names.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation. Requires `AUDIT_SECRET_KEY` (min 32 chars).
-* **Admin Token Protection:** `/api/audit/logs` endpoint requires `API_ADMIN_TOKEN` bearer authentication.
-* **Path Traversal Prevention:** Batch CLI validates input paths remain within the working directory.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
-
----
-
-## 🧪 Testing & Verification
-
-Run the full test suite:
+## Tests
 
 ```bash
-pytest -v
+python -m pytest -q
+python -m pip check
+node --test web/biometry.test.js   # Node 22+ for development only
 ```
 
-Run with coverage:
+GitHub Actions tests Python 3.10, 3.11, 3.12 and the standalone JavaScript calculation. The static calculator needs no Python runtime, Pyodide, account, server or third-party script.
+
+## Docker
 
 ```bash
-pytest -v --cov=agents --cov-report=html
+printf 'AUDIT_SECRET_KEY=%s\n' "$(python -c 'import secrets; print(secrets.token_hex(32))')" > .env
+docker compose up --build
 ```
 
-Execute high-throughput batch simulation benchmarks:
+Open `http://localhost:8000/`. The root page and API run in the same container. `.env` is excluded from Git. For deployment, configure appropriate authentication, transport security, runtime isolation, and privacy governance independently.
 
-```bash
-python simulator.py 1000
-```
+## Technology, browsers and license
 
----
+- Python, Pydantic 2, FastAPI and Uvicorn for optional backend workflows
+- Plain HTML/CSS/JavaScript for offline numerical calculation
+- Current desktop/mobile Chrome, Firefox, Safari and Edge (ES2021-capable)
+- [MIT License](LICENSE)
 
-## 🐳 Container Deployment
-
-### Docker
-```bash
-# Create .env file
-echo "AUDIT_SECRET_KEY=$(python -c 'import secrets; print(secrets.token_hex(32))')" > .env
-
-# Build and run
-docker build -t fetal-ultrasound-biometry-agent .
-docker run -p 8000:8000 --env-file .env fetal-ultrasound-biometry-agent
-```
-
-### Docker Compose
-```bash
-# Set your audit key
-export AUDIT_SECRET_KEY=$(python -c 'import secrets; print(secrets.token_hex(32))')
-
-# Launch
-docker compose up -d
-```
-
----
-
-## 📁 Project Structure
-
-```
-fetal-ultrasound-biometry-agent/
-├── agents/                  # Core agent modules
-│   ├── __init__.py
-│   ├── api.py              # FastAPI REST server
-│   ├── base.py             # PHI guard, HMAC audit trail
-│   ├── learning.py         # Bayesian calibration engine
-│   ├── llm_factory.py      # LLM provider factory
-│   ├── metrics.py          # Prometheus metrics
-│   ├── models.py           # Pydantic schemas
-│   ├── streamer.py         # WebSocket telemetry
-│   ├── supervisor.py       # Master orchestrator
-│   └── workers.py          # Specialized evaluation workers
-├── fetal_echo_ai/          # Frontier domain engine (v2)
-│   ├── agents.py
-│   ├── cli.py
-│   ├── engine.py
-│   ├── models.py
-│   └── server.py
-├── tests/                  # Pytest test suite
-│   ├── conftest.py
-│   ├── test_enrichment.py
-│   ├── test_fetal_echo_ai.py
-│   ├── test_fetal_ultrasound_biometry_agent.py
-│   └── test_security_and_api.py
-├── web/index.html          # Operations console UI
-├── .github/workflows/ci.yml
-├── cli.py                  # Main CLI entry point
-├── enrichment.py           # Domain enrichment engines
-├── simulator.py            # Load testing simulator
-├── sample.csv              # Sample batch input
-├── sample_payload.json     # Sample API payload
-├── benchmark_dataset.json  # Golden benchmark test cases
-├── Dockerfile
-├── docker-compose.yml
-├── pyproject.toml
-└── LICENSE
-```
-
----
-
-## 📄 License
-
-MIT License. See [LICENSE](LICENSE) for details.
+The repository has a GitHub Pages deployment workflow for the `web/` directory. Publication depends on the repository's GitHub Pages settings and successful deployment.

@@ -3,6 +3,7 @@ Supervisor Orchestrator & Operations Intelligence for Fetal Ultrasound Biometry 
 Domain: Clinical & Biomedical AI
 """
 import uuid
+import json
 from typing import Dict, Any, List, Optional
 from .base import AuditLogger, ActionExecutor, PHIGuard
 from .models import SystemTaskPayload, AgentAlert, ConsensusDossier, UrgencyLevel, SystemIntegrityStatus
@@ -25,6 +26,8 @@ class SystemSupervisor:
         PHIGuard.assert_no_phi(payload.task_id)
         PHIGuard.assert_no_phi(payload.target_identifier)
         PHIGuard.assert_no_phi(payload.status_descriptor)
+        # PHI can also be hidden in free-form metadata.
+        PHIGuard.assert_no_phi(json.dumps(payload.attributes, sort_keys=True, allow_nan=False))
 
         # Multi-worker evaluations
         all_alerts: List[AgentAlert] = []
@@ -75,5 +78,5 @@ class SystemSupervisor:
 
     def query_supervisory_chat(self, query: str) -> str:
         PHIGuard.assert_no_phi(query)
-        prompt = f"Supervisor inquiry for Fetal Ultrasound Biometry Agent under CAP / CLSI / ISO Standards: {query}"
+        prompt = f"Supervisor inquiry for Fetal Ultrasound Biometry Agent using demonstration rules, not clinical guidelines: {query}"
         return self.llm.invoke(prompt)

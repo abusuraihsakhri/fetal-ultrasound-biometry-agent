@@ -1,236 +1,166 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fetal Ultrasound Biometry Engine — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Fetal Biometry | Hadlock-3 EFW</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #17253c; background: #f4f7fb; line-height: 1.5; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .shell { max-width: 1080px; margin: 0 auto; padding: 2.3rem 1.25rem 4rem; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.7rem; }
+    h1 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.25rem); letter-spacing: -.04em; }
+    h2 { font-size: 1.1rem; margin: 0 0 1.1rem; }
+    p { margin: .4rem 0; }
+    .muted { color: #53657d; }
+    .tag { border-radius: 100px; background: #e6f2ee; border: 1px solid #abd5c9; color: #195b49; font-size: .82rem; padding: .35rem .7rem; font-weight: 650; }
+    .intro { max-width: 780px; margin-bottom: 1.5rem; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.3rem; align-items: start; }
+    .card { border: 1px solid #d7e1eb; background: #fff; border-radius: 15px; padding: 1.5rem; box-shadow: 0 5px 24px rgb(25 53 91 / 5%); }
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    label { display: block; font-weight: 650; font-size: .9rem; margin-bottom: .35rem; }
+    .sub { display: block; color: #5d6e82; font-size: .78rem; font-weight: 400; }
+    input { width: 100%; border-radius: 9px; padding: .72rem .8rem; font-size: 1rem; color: #182b42; background: white; border: 1px solid #a9b9ca; }
+    input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #7ca9ef; outline-offset: 2px; }
+    button { border: 0; border-radius: 9px; padding: .82rem 1.05rem; background: #174d92; color: white; font: inherit; font-weight: 650; cursor: pointer; }
+    button:hover { background: #103a72; }
+    button.secondary { background: #eaf1fa; color: #194478; border: 1px solid #bad0e9; }
+    button:disabled { cursor: not-allowed; opacity: .5; }
+    .actions { display: flex; gap: .65rem; flex-wrap: wrap; margin-top: 1.3rem; }
+    .result { border-radius: 12px; padding: 1.25rem; background: #ecf5fe; border: 1px solid #c8dfef; margin-bottom: 1.2rem; }
+    .eyebrow { font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: #335878; font-size: .75rem; }
+    .value { font-size: clamp(2rem, 5vw, 2.8rem); font-variant-numeric: tabular-nums; font-weight: 750; line-height: 1.2; margin: .4rem 0; }
+    .placeholder { font-size: 1rem; font-weight: 500; padding: .6rem 0; }
+    dl { display: grid; grid-template-columns: 1fr auto; column-gap: 1rem; margin: 1rem 0; font-size: .92rem; }
+    dt, dd { padding: .42rem 0; border-bottom: 1px solid #e5edf5; margin: 0; }
+    dd { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+    .error { padding: .7rem .85rem; background: #fff0f0; border: 1px solid #f0b2b2; color: #932b2b; border-radius: 8px; margin-top: 1rem; }
+    .note { margin-top: 1.5rem; border-left: 4px solid #cb8541; padding: 1rem 1.2rem; background: #fffaf1; }
+    a { color: #164b91; }
+    small { color: #52647a; }
+    footer { margin-top: 1.5rem; font-size: .83rem; }
+    [hidden] { display: none !important; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .shell { padding-top: 1.3rem; } .card { padding: 1.15rem; } }
+    @media (max-width: 380px) { .fields { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
-
-    <div class="header">
-        <div class="header-title">
-            <h1>Fetal Ultrasound Biometry Engine</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
+<main class="shell">
+  <header>
+    <div><h1>Fetal ultrasound biometry</h1><p class="muted">Measured parameters → estimated fetal weight</p></div>
+    <span class="tag">Runs entirely in this browser</span>
+  </header>
+  <p class="intro muted">Enter fetal ultrasound measurements to calculate estimated fetal weight (EFW) using the three-parameter Hadlock equation. This tool does not acquire measurements from images or determine gestational age or growth percentiles.</p>
+  <div class="grid">
+    <section class="card" aria-labelledby="form-heading">
+      <h2 id="form-heading">Measurements</h2>
+      <form id="biometry-form">
+        <div class="fields">
+          <div><label for="hc">Head circumference (HC) <span class="sub">millimeters · required</span></label><input id="hc" name="hc" type="number" min="0.1" max="1000" step="any" value="300" required></div>
+          <div><label for="ac">Abdominal circumference (AC) <span class="sub">millimeters · required</span></label><input id="ac" name="ac" type="number" min="0.1" max="1000" step="any" value="280" required></div>
+          <div><label for="fl">Femur length (FL) <span class="sub">millimeters · required</span></label><input id="fl" name="fl" type="number" min="0.1" max="1000" step="any" value="55" required></div>
+          <div><label for="bpd">Biparietal diameter (BPD) <span class="sub">millimeters · optional, recorded only</span></label><input id="bpd" name="bpd" type="number" min="0.1" max="1000" step="any" value="78"></div>
         </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
+        <div class="actions">
+          <button type="submit">Calculate EFW</button>
+          <button class="secondary" type="reset">Reset example</button>
         </div>
-    </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Fetal Ultrasound Biometry Engine Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "fetal-ultrasound-biometry-engine",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
+      </form>
+      <p id="validation-error" class="error" role="alert" hidden></p>
+      <p><small>Initial values are fictional examples. Use measurements acquired by a qualified operator; enter no names, identifiers, or other patient information.</small></p>
+    </section>
+    <section class="card" aria-labelledby="results-heading">
+      <h2 id="results-heading">Calculation result</h2>
+      <div class="result" aria-live="polite" aria-atomic="true">
+        <div class="eyebrow">Hadlock-3 estimated fetal weight</div>
+        <div class="value" id="efw-value"><span class="placeholder">Enter measurements and calculate</span></div>
+        <div id="efw-kg" class="muted"></div>
+      </div>
+      <div class="eyebrow">Submitted measurements</div>
+      <dl>
+        <dt>HC</dt><dd id="out-hc">—</dd>
+        <dt>AC</dt><dd id="out-ac">—</dd>
+        <dt>FL</dt><dd id="out-fl">—</dd>
+        <dt>BPD (not used in EFW)</dt><dd id="out-bpd">—</dd>
+      </dl>
+      <button id="download" class="secondary" disabled type="button">Export result as CSV</button>
+      <p><small>Calculation uses HC, AC and FL in centimeters internally. BPD does not alter this estimate. No diagnostic classification is generated.</small></p>
+    </section>
+  </div>
+  <aside class="note" aria-label="Clinical and privacy notice">
+    <strong>Interpretation and limitations</strong>
+    <p>This is a numerical educational tool, not a validated clinical decision-support system. Formula-derived weight has measurement uncertainty and cannot establish fetal growth restriction, a percentile, gestational age or an anomaly. Assessment requires appropriate ultrasound technique, dating, growth reference, Doppler and clinical context. Do not use this output alone for medical decisions.</p>
+    <p>All calculation and CSV export occur locally. No measurements are transmitted or saved by this page. Avoid entering patient-identifying information.</p>
+  </aside>
+  <footer class="muted">
+    <p>Reference: Hadlock FP et al., <em>Am J Obstet Gynecol</em> 1985;151:333–337. See also <a href="https://doi.org/10.1002/uog.24888" target="_blank" rel="noopener noreferrer">ISUOG mid-trimester ultrasound guidance</a>.</p>
+  </footer>
+</main>
+<script src="./biometry.js"></script>
+<script>
+  'use strict';
+  const form = document.getElementById('biometry-form');
+  const error = document.getElementById('validation-error');
+  const download = document.getElementById('download');
+  let latest = null;
+  function clearOutput() {
+    latest = null;
+    document.getElementById('efw-value').textContent = 'Enter measurements and calculate';
+    document.getElementById('efw-kg').textContent = '';
+    for (const key of ['hc', 'ac', 'fl', 'bpd']) document.getElementById('out-' + key).textContent = '—';
+    download.disabled = true;
+    error.hidden = true;
+  }
+  form.addEventListener('reset', () => { clearOutput(); });
+  form.addEventListener('input', () => { clearOutput(); });
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    error.hidden = true;
+    try {
+      const read = id => {
+        const value = document.getElementById(id).value.trim();
+        if (!value) throw new RangeError(id.toUpperCase() + ' is required.');
+        return Number(value);
+      };
+      const bpdText = document.getElementById('bpd').value.trim();
+      latest = Biometry.estimateFetalWeight(
+        read('hc'), read('ac'), read('fl'),
+        bpdText ? Number(bpdText) : null
+      );
+      const grams = latest.estimated_fetal_weight_g;
+      document.getElementById('efw-value').textContent = grams.toLocaleString(undefined, {maximumFractionDigits: 1}) + ' g';
+      document.getElementById('efw-kg').textContent = (grams / 1000).toFixed(3) + ' kg (rounded)';
+      for (const key of ['hc', 'ac', 'fl', 'bpd']) {
+        const val = latest.measurements_mm[key.toUpperCase()];
+        document.getElementById('out-' + key).textContent = val === null ? 'Not provided' : val + ' mm';
+      }
+      download.disabled = false;
+    } catch (err) {
+      clearOutput();
+      error.textContent = err.message;
+      error.hidden = false;
+    }
+  });
+  download.addEventListener('click', () => {
+    if (!latest) return;
+    const m = latest.measurements_mm;
+    const rows = [
+      ['method','HC_mm','AC_mm','FL_mm','BPD_mm','estimated_fetal_weight_g'],
+      [latest.method,m.HC,m.AC,m.FL,m.BPD ?? '',latest.estimated_fetal_weight_g]
+    ];
+    const quote = value => '"' + String(value).replaceAll('"','""') + '"';
+    const csv = rows.map(row => row.map(quote).join(',')).join('\r\n') + '\r\n';
+    const url = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'fetal-biometry-efw.csv';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+</script>
 </body>
 </html>
