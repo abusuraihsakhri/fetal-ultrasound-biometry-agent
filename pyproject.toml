@@ -27,6 +27,7 @@ dev = [
     "pytest>=7.0",
     "pytest-asyncio",
     "httpx",
+    "httpx2>=2.13",
 ]
 
 [project.scripts]
