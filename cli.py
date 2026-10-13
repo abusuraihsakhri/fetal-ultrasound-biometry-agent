@@ -8,6 +8,7 @@ import os
 import secrets
 import sys
 import warnings
+from pathlib import Path
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
 from agents.base import AuditLogger, SecurityException
@@ -94,11 +95,11 @@ def main(argv=None):
 
     if args.command == "batch":
         # Resolve to absolute paths and prevent path traversal outside working directory
-        input_path = os.path.abspath(args.input)
-        output_path = os.path.abspath(args.output)
-        cwd = os.getcwd()
+        input_path = str(Path(args.input).resolve())
+        output_path = str(Path(args.output).resolve())
+        cwd = str(Path.cwd().resolve())
 
-        if not input_path.startswith(cwd):
+        if os.path.commonpath([cwd, input_path]) != cwd:
             print(f"Error: Input path must be within the working directory: {args.input}", file=sys.stderr)
             return 1
 
