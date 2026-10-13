@@ -22,13 +22,13 @@ class SystemIntegrityStatus(str, Enum):
 
 
 class SystemTaskPayload(BaseModel):
-    task_id: str = Field(..., description="Unique task / case identifier")
-    target_identifier: str = Field(..., description="Entity, patient key, or genomic/cryptographic target")
-    primary_metric: float = Field(..., description="Primary domain measurement or score")
-    secondary_metric: float = Field(default=0.0, description="Secondary kinetic or confidence score")
-    status_descriptor: str = Field(default="NOMINAL", description="Status code or phenotype descriptor")
+    task_id: str = Field(..., min_length=1, max_length=128, description="Non-identifying task identifier")
+    target_identifier: str = Field(..., min_length=1, max_length=128, description="Non-identifying target key; do not enter patient identifiers")
+    primary_metric: float = Field(..., allow_inf_nan=False, description="Legacy demonstration metric; not validated fetal biometry")
+    secondary_metric: float = Field(default=0.0, allow_inf_nan=False, description="Legacy demonstration secondary metric")
+    status_descriptor: str = Field(default="NOMINAL", max_length=256, description="Demonstration status descriptor")
     is_critical_flag: bool = Field(default=False, description="Emergency escalation or high priority trigger")
-    attributes: Dict[str, Any] = Field(default_factory=dict, description="Metadata key-value pairs")
+    attributes: Dict[str, Any] = Field(default_factory=dict, max_length=32, description="Limited non-identifying metadata")
     timestamp: str = Field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
 
