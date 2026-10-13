@@ -1,10 +1,12 @@
 # Fetal Ultrasound Biometry Agent
 
+### [Open the Live Application →](https://abusuraihsakhri.github.io/fetal-ultrasound-biometry-agent/)
+
 Numerical fetal **estimated weight (EFW)** calculator using the Hadlock-3 equation (head circumference, abdominal circumference and femur length). Includes a standalone browser interface, Python function, and FastAPI endpoint. Other legacy audit and simulator interfaces remain available but are **not clinical growth classifiers**.
 
 ## Browser calculator
 
-Open `web/index.html` in a modern browser, or use the GitHub Pages deployment when available. Enter ultrasound measurements in **millimeters**:
+Open the live application above or load `web/index.html` locally in a modern browser. Enter ultrasound measurements in **millimeters**:
 
 - HC — head circumference (required)
 - AC — abdominal circumference (required)
@@ -84,7 +86,7 @@ A missing `AUDIT_SECRET_KEY` in the local CLI generates an **ephemeral** session
 ```bash
 python -m pytest -q
 python -m pip check
-node --test web/biometry.test.js   # Node 22+ for development only
+node --test web/*.test.js   # Node 22+ for development only
 ```
 
 GitHub Actions tests Python 3.10, 3.11, 3.12 and the standalone JavaScript calculation. The static calculator needs no Python runtime, Pyodide, account, server or third-party script.
@@ -105,4 +107,4 @@ Open `http://localhost:8000/`. The root page and API run in the same container. 
 - Current desktop/mobile Chrome, Firefox, Safari and Edge (ES2021-capable)
 - [MIT License](LICENSE)
 
-The repository has a GitHub Pages deployment workflow for the `web/` directory. Publication depends on the repository's GitHub Pages settings and successful deployment.
+GitHub Pages publishes the `web/` directory. The deployment workflow tests that the public HTML and JavaScript assets are retrievable over HTTP.
