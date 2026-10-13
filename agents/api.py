@@ -17,7 +17,7 @@ supervisor = SystemSupervisor(model_provider="mock")
 
 app = FastAPI(
     title="Fetal Ultrasound Biometry Agent API",
-    description="Enterprise Distributed Component Platform (Clinical & Biomedical AI)",
+    description="Numerical fetal weight estimation and legacy demonstration audit endpoints",
     version="3.0.0-ENTERPRISE",
 )
 
@@ -46,7 +46,7 @@ def verify_admin_token(authorization: Optional[str] = Header(None)) -> None:
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "fetal-ultrasound-biometry-agent", "domain": "Clinical & Biomedical AI", "standard": "CAP / CLSI / ISO Standards", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "HEALTHY", "service": "fetal-ultrasound-biometry-agent", "domain": "Clinical & Biomedical AI", "standard": "Legacy nonclinical demonstration thresholds", "version": "3.0.0-ENTERPRISE"}
 
 
 @app.get("/metrics")
