@@ -8,10 +8,9 @@ version = "3.0.0"
 description = "Fetal Ultrasound Biometry Agent: Clinical decision support system for fetal ultrasound measurements"
 readme = "README.md"
 authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
-license = { text = "MIT" }
+license = "MIT"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -42,3 +41,10 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test"]
 python_functions = ["test_*"]
+
+[tool.setuptools]
+py-modules = ["biometry", "cli", "enrichment", "simulator", "fetal_echo_ai_app"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agents", "agents.*", "fetal_echo_ai", "fetal_echo_ai.*"]
