@@ -29,3 +29,51 @@ def test_estimate_contains_no_percentile_or_diagnosis():
     result = estimate_fetal_weight(300, 280, 55)
     assert "percentile" not in result
     assert "not gestational age" in result["interpretation"].lower()
+
+
+def test_api_biometry_matches_python_calculator():
+    from fastapi.testclient import TestClient
+    from agents.api import app
+
+    with TestClient(app) as client:
+        response = client.post("/api/biometry", json={"hc_mm": 300, "ac_mm": 280, "fl_mm": 55, "bpd_mm": 78})
+        assert response.status_code == 200
+        assert response.json()["estimated_fetal_weight_g"] == estimate_fetal_weight(300, 280, 55, 78)["estimated_fetal_weight_g"]
+        assert client.post("/api/biometry", json={"hc_mm": 300, "ac_mm": 0, "fl_mm": 55}).status_code == 422
+        assert client.post("/api/biometry", json={"hc_mm": 300, "ac_mm": "NaN", "fl_mm": 55}).status_code == 422
+        page = client.get("/")
+        assert page.status_code == 200
+        assert "Hadlock-3" in page.text
+
+
+def test_audit_integrity_detects_last_entry_modification():
+    from agents.base import AuditTrail
+
+    trail = AuditTrail(secret_key="independent-test-key-32-characters-minimum")
+    trail.log("system", "worker", "EVENT", {"status": "OK"})
+    assert trail.verify_integrity() is True
+    trail.logs[-1]["event_type"] = "FORGED"
+    assert trail.verify_integrity() is False
+
+
+def test_audit_snapshot_cannot_modify_signed_internal_entries():
+    from agents.base import AuditTrail
+
+    trail = AuditTrail(secret_key="independent-test-key-32-characters-minimum")
+    trail.log("system", "worker", "EVENT", {"status": "OK"})
+    snapshot = trail.get_trail()
+    snapshot[0]["current_hash"] = "FORGED"
+    assert trail.verify_integrity() is True
+
+
+def test_task_metadata_phi_is_screened():
+    from agents.models import SystemTaskPayload
+    from agents.supervisor import SystemSupervisor
+    from agents.base import SecurityException
+
+    task = SystemTaskPayload(
+        task_id="TASK-01", target_identifier="NONPHI-01",
+        primary_metric=12.0, attributes={"contact": "person@example.org"}
+    )
+    with pytest.raises(SecurityException):
+        SystemSupervisor().process_task(task)
